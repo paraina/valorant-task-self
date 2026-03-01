@@ -72,7 +72,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1923] px-4 py-10 text-[#ece8e1]" style={{ fontFamily: "'Rajdhani', 'Arial', sans-serif" }}>
+    <div className="min-h-screen bg-[#0f1923] px-4 py-10 text-[#ece8e1]" style={{ fontFamily: "'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif" }}>
       <div className="mx-auto max-w-2xl space-y-8">
         {/* Header */}
         <header className="text-center">
@@ -156,7 +156,7 @@ export default function App() {
         {/* Assign button */}
         <button
           onClick={handleAssign}
-          className="w-full rounded border border-[#ff4655] bg-[#ff4655] py-3 text-sm font-black uppercase tracking-[0.3em] text-white transition-colors hover:bg-[#ff4655]/80 active:scale-[0.98]"
+          className="w-full rounded border border-[#ff4655] bg-[#ff4655] py-3 text-sm font-black text-white transition-colors hover:bg-[#ff4655]/80 active:scale-[0.98]"
         >
           タスクを割り振る
         </button>
