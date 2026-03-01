@@ -1,12 +1,5 @@
-export interface Assignment {
-  player: string;
-  task: string;
-}
-
-/**
- * Shuffles an array in place using the Fisher-Yates algorithm.
- */
-function shuffleArray<T>(array: T[]): T[] {
+/** Fisher-Yates shuffle – returns a new shuffled array. */
+export function shuffleArray<T>(array: T[]): T[] {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -15,15 +8,20 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
+export interface Assignment {
+  player: string;
+  task: string;
+}
+
 /**
- * Assigns shuffled tasks to players. If there are more players than tasks,
- * tasks cycle around. If there are more tasks than players, only the first
- * n tasks (where n = number of players) are used.
+ * Assigns tasks to players.
+ * If there are more players than tasks the extra players get no task.
+ * If there are more tasks than players the extra tasks are ignored.
  */
 export function assignTasks(players: string[], tasks: string[]): Assignment[] {
-  const shuffledTasks = shuffleArray(tasks);
-  return players.map((player, index) => ({
+  const shuffled = shuffleArray(tasks);
+  return players.map((player, i) => ({
     player,
-    task: shuffledTasks[index % shuffledTasks.length],
+    task: shuffled[i] ?? '—',
   }));
 }

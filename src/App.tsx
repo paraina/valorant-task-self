@@ -1,184 +1,225 @@
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
-import ResultsDisplay from './components/ResultsDisplay';
-import { assignTasks, type Assignment } from './utils/shuffle';
+import ResultsBoard from './components/ResultsBoard';
+import { assignTasks } from './utils/shuffle';
+import type { Assignment } from './utils/shuffle';
 
-const MIN_PLAYERS = 1;
 const MAX_PLAYERS = 10;
+const ACCENT = '#ff4655';
+const BG_DEEP = '#0a1118';
+const BG = '#0f1923';
+const TEXT = '#ece8e1';
+const BORDER = '#1e2d3d';
+
+const DEFAULT_TASKS = `エントリーフラッグ（先頭入場）
+スモークを焚く
+フラッシュを投げる
+インフォ収集（偵察）
+アンカー（後方守備）
+デュエルを挑む
+ユーティリティを温存
+ドローン偵察
+クロスファイアを張る
+爆弾解除サポート`;
 
 export default function App() {
-  const [playerCount, setPlayerCount] = useState(5);
-  const [playerNames, setPlayerNames] = useState<string[]>(Array(5).fill(''));
-  const [tasksText, setTasksText] = useState('');
+  const [playerCount, setPlayerCount] = useState(3);
+  const [playerNames, setPlayerNames] = useState<string[]>(
+    Array.from({ length: MAX_PLAYERS }, (_, i) => `Player ${i + 1}`)
+  );
+  const [taskText, setTaskText] = useState(DEFAULT_TASKS);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [error, setError] = useState('');
-  const [downloading, setDownloading] = useState(false);
-  const resultsRef = useRef<HTMLDivElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
-  function handlePlayerCountChange(count: number) {
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  const handlePlayerCountChange = (count: number) => {
     setPlayerCount(count);
-    setPlayerNames((prev) => {
-      const next = [...prev];
-      while (next.length < count) next.push('');
-      return next.slice(0, count);
-    });
-    setAssignments([]);
-    setError('');
-  }
+  };
 
-  function handlePlayerNameChange(index: number, value: string) {
+  const handleNameChange = (index: number, value: string) => {
     setPlayerNames((prev) => {
       const next = [...prev];
       next[index] = value;
       return next;
     });
-  }
+  };
 
-  function handleAssign() {
-    setError('');
-    const players = playerNames.map((n) => n.trim()).filter(Boolean);
-    if (players.length === 0) {
-      setError('プレイヤー名を少なくとも1人入力してください。');
-      return;
-    }
-    const tasks = tasksText
+  const handleAssign = () => {
+    const players = playerNames.slice(0, playerCount).map((n, i) => n.trim() || `Player ${i + 1}`);
+    const tasks = taskText
       .split('\n')
       .map((t) => t.trim())
       .filter(Boolean);
     if (tasks.length === 0) {
-      setError('タスクを少なくとも1つ入力してください。');
+      alert('タスクを1つ以上入力してください。');
       return;
     }
     setAssignments(assignTasks(players, tasks));
-  }
+    setTimeout(() => {
+      document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
 
-  async function handleDownload() {
-    if (!resultsRef.current) return;
-    setDownloading(true);
+  const handleDownload = async () => {
+    if (!boardRef.current) return;
+    setIsCapturing(true);
     try {
-      const canvas = await html2canvas(resultsRef.current, {
-        backgroundColor: '#0f1923',
+      const canvas = await html2canvas(boardRef.current, {
+        backgroundColor: BG,
         scale: 2,
         useCORS: true,
         logging: false,
       });
       const link = document.createElement('a');
-      link.download = 'valorant-task-challenge.png';
+      link.download = 'valorant-tasks.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
+    } catch (e) {
+      console.error('Image capture failed:', e);
     } finally {
-      setDownloading(false);
+      setIsCapturing(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-[#0f1923] px-4 py-10 text-[#ece8e1]" style={{ fontFamily: "'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif" }}>
-      <div className="mx-auto max-w-2xl space-y-8">
-        {/* Header */}
-        <header className="text-center">
-          <h1
-            className="text-5xl font-black uppercase tracking-[0.3em] text-[#ece8e1]"
-            style={{ fontFamily: 'Impact, Arial Black, sans-serif' }}
-          >
-            VALORANT
-          </h1>
-          <p className="mt-1 text-sm font-bold uppercase tracking-[0.5em] text-[#ff4655]">
-            Task Assignment System
-          </p>
-          <div className="mt-4 h-px bg-gradient-to-r from-transparent via-[#ff4655] to-transparent" />
-        </header>
+    <div style={{ backgroundColor: BG, minHeight: '100vh', color: TEXT }}>
+      {/* Header */}
+      <header
+        style={{ backgroundColor: BG_DEEP, borderBottom: `2px solid ${ACCENT}` }}
+        className="py-6 px-6 text-center"
+      >
+        <div style={{ color: ACCENT }} className="text-xs font-bold tracking-widest uppercase mb-1">
+          ◆ TACTICAL OPERATIONS ◆
+        </div>
+        <h1 className="text-4xl font-black uppercase tracking-widest" style={{ color: TEXT }}>
+          VALORANT TASK CHALLENGE
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: '#8b9ba8' }}>
+          プレイヤーにタスクをランダムに割り振るシステム
+        </p>
+      </header>
 
-        {/* Player count selector */}
-        <section className="space-y-3">
-          <label className="block text-xs font-bold uppercase tracking-widest text-[#ff4655]">
-            Players ({MIN_PLAYERS}–{MAX_PLAYERS})
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {Array.from({ length: MAX_PLAYERS }, (_, i) => i + 1).map((n) => (
-              <button
-                key={n}
-                onClick={() => handlePlayerCountChange(n)}
-                className={`h-10 w-10 rounded border text-sm font-bold transition-colors ${
-                  playerCount === n
-                    ? 'border-[#ff4655] bg-[#ff4655] text-white'
-                    : 'border-[#ece8e1]/20 bg-[#1a2634] text-[#ece8e1]/60 hover:border-[#ff4655]/60 hover:text-[#ece8e1]'
-                }`}
-              >
-                {n}
-              </button>
-            ))}
+      <main className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-8">
+        {/* Step 1: Player Setup */}
+        <section
+          style={{ backgroundColor: BG_DEEP, border: `1px solid ${BORDER}` }}
+          className="rounded-lg p-6"
+        >
+          <h2 className="text-lg font-black uppercase tracking-widest mb-4" style={{ color: ACCENT }}>
+            01 — プレイヤー設定
+          </h2>
+
+          {/* Player count selector */}
+          <div className="mb-5">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8b9ba8' }}>
+              人数を選択
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: MAX_PLAYERS }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => handlePlayerCountChange(n)}
+                  className="w-10 h-10 rounded font-black text-sm transition-all"
+                  style={{
+                    backgroundColor: playerCount === n ? ACCENT : '#1e2d3d',
+                    color: playerCount === n ? '#fff' : TEXT,
+                    border: `1px solid ${playerCount === n ? ACCENT : BORDER}`,
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </div>
-        </section>
 
-        {/* Player name inputs */}
-        <section className="space-y-3">
-          <label className="block text-xs font-bold uppercase tracking-widest text-[#ff4655]">
-            Player Names
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            {playerNames.map((name, i) => (
+          {/* Player name inputs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Array.from({ length: playerCount }, (_, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="w-6 text-right text-xs font-bold text-[#ff4655]/60">{i + 1}</span>
+                <span
+                  className="text-xs font-bold w-6 text-right shrink-0"
+                  style={{ color: ACCENT }}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </span>
                 <input
                   type="text"
-                  value={name}
-                  onChange={(e) => handlePlayerNameChange(i, e.target.value)}
+                  value={playerNames[i]}
+                  onChange={(e) => handleNameChange(i, e.target.value)}
                   placeholder={`Player ${i + 1}`}
-                  maxLength={20}
-                  className="flex-1 rounded border border-[#ece8e1]/20 bg-[#1a2634] px-3 py-2 text-sm font-bold uppercase tracking-wider text-[#ece8e1] placeholder-[#ece8e1]/30 outline-none transition-colors focus:border-[#ff4655]"
+                  className="flex-1 rounded px-3 py-2 text-sm font-medium outline-none focus:ring-2"
+                  style={{
+                    backgroundColor: '#1a2530',
+                    color: TEXT,
+                    border: `1px solid ${BORDER}`,
+                  }}
                 />
               </div>
             ))}
           </div>
         </section>
 
-        {/* Task input */}
-        <section className="space-y-3">
-          <label className="block text-xs font-bold uppercase tracking-widest text-[#ff4655]">
-            Tasks (one per line)
+        {/* Step 2: Task Input */}
+        <section
+          style={{ backgroundColor: BG_DEEP, border: `1px solid ${BORDER}` }}
+          className="rounded-lg p-6"
+        >
+          <h2 className="text-lg font-black uppercase tracking-widest mb-4" style={{ color: ACCENT }}>
+            02 — タスクリスト
+          </h2>
+          <label className="block text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8b9ba8' }}>
+            タスクを1行につき1つ入力（改行区切り）
           </label>
           <textarea
-            value={tasksText}
-            onChange={(e) => setTasksText(e.target.value)}
-            rows={6}
-            placeholder={"Entry Frag\nSupport\nSentinel\nController\nInitiator"}
-            className="w-full rounded border border-[#ece8e1]/20 bg-[#1a2634] px-4 py-3 text-sm text-[#ece8e1] placeholder-[#ece8e1]/30 outline-none transition-colors focus:border-[#ff4655] resize-none"
+            value={taskText}
+            onChange={(e) => setTaskText(e.target.value)}
+            rows={10}
+            className="w-full rounded px-3 py-2 text-sm font-medium outline-none resize-y focus:ring-2"
+            style={{
+              backgroundColor: '#1a2530',
+              color: TEXT,
+              border: `1px solid ${BORDER}`,
+              lineHeight: '1.8',
+            }}
           />
+          <p className="mt-2 text-xs" style={{ color: '#8b9ba8' }}>
+            {taskText.split('\n').filter((t) => t.trim()).length} 件のタスク
+          </p>
         </section>
 
-        {/* Error */}
-        {error && (
-          <p className="rounded border border-[#ff4655]/40 bg-[#ff4655]/10 px-4 py-2 text-sm text-[#ff4655]">
-            {error}
-          </p>
-        )}
-
-        {/* Assign button */}
+        {/* Assign Button */}
         <button
           onClick={handleAssign}
-          className="w-full rounded border border-[#ff4655] bg-[#ff4655] py-3 text-sm font-black text-white transition-colors hover:bg-[#ff4655]/80 active:scale-[0.98]"
+          className="w-full py-4 rounded font-black text-base uppercase tracking-widest transition-all hover:opacity-90 active:scale-95"
+          style={{ backgroundColor: ACCENT, color: '#fff', letterSpacing: '0.15em' }}
         >
-          タスクを割り振る
+          ◆ タスクを割り振る ◆
         </button>
 
         {/* Results */}
         {assignments.length > 0 && (
-          <section className="space-y-4">
-            <div ref={resultsRef}>
-              <ResultsDisplay assignments={assignments} />
-            </div>
-
-            {/* Download button */}
+          <section id="results-section" className="flex flex-col gap-4">
+            <h2 className="text-lg font-black uppercase tracking-widest" style={{ color: ACCENT }}>
+              03 — 割り当て結果
+            </h2>
+            <ResultsBoard assignments={assignments} boardRef={boardRef} />
             <button
               onClick={handleDownload}
-              disabled={downloading}
-              className="w-full rounded border border-[#ece8e1]/30 bg-transparent py-3 text-sm font-black uppercase tracking-[0.2em] text-[#ece8e1] transition-colors hover:border-[#ece8e1] disabled:opacity-50"
+              disabled={isCapturing}
+              className="w-full py-3 rounded font-bold text-sm uppercase tracking-widest transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+              style={{
+                backgroundColor: 'transparent',
+                color: ACCENT,
+                border: `2px solid ${ACCENT}`,
+                letterSpacing: '0.1em',
+              }}
             >
-              {downloading ? 'Generating...' : '⬇ Download Results'}
+              {isCapturing ? '処理中...' : '↓ Download Results — 結果を画像として保存'}
             </button>
           </section>
         )}
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background-color: #0f1923;
+  color: #ece8e1;
+  min-height: 100vh;
+}
+
+button {
+  cursor: pointer;
+}
