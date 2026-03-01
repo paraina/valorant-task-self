@@ -19,7 +19,7 @@ export default function ResultsBoard({ assignments, boardRef }: ResultsBoardProp
   return (
     <div
       ref={boardRef}
-      style={{ backgroundColor: BG, color: TEXT, fontFamily: "'Inter','Segoe UI',system-ui,sans-serif" }}
+      style={{ backgroundColor: BG, color: TEXT, fontFamily: "'Noto Sans JP','Hiragino Kaku Gothic ProN','Meiryo','Inter','Segoe UI',system-ui,sans-serif" }}
       className="relative overflow-hidden rounded-lg p-8 w-full"
     >
       {/* Watermark */}
